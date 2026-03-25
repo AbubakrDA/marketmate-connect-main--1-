@@ -1,7 +1,8 @@
 import json
 from sqlalchemy.orm import Session
+from app.db import base
 from app import crud, models, schemas
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, engine
 from app.core.security import get_password_hash
 
 # Mock data extracted from mock.ts
@@ -94,6 +95,8 @@ def init_db(db: Session) -> None:
             crud.listing.create(db, obj_in=list_in)
 
 if __name__ == "__main__":
+    print("Creating tables...")
+    base.Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     init_db(db)
     print("Database seeded!")
