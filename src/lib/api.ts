@@ -93,4 +93,15 @@ export const leadService = {
   },
 };
 
+export const dashboardService = {
+  getAdminStats: async () => {
+    const response = await api.get('/dashboard/admin/stats');
+    return response.data;
+  },
+  getBusinessStats: async (businessId: string) => {
+    const response = await api.get(`/dashboard/business/${businessId}/stats`);
+    return response.data;
+  },
+};
+
 export default api;

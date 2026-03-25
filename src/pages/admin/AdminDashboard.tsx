@@ -1,29 +1,35 @@
-import { users, businesses, listings, leads, adCampaigns, subscriptions, buyerRequests, offers, paymentTransactions, getInvitationStats } from '@/data/mock';
+import { dashboardService } from '@/lib/api';
 import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Building2, FileText, Inbox, Megaphone, CreditCard, ShoppingBag, Send, DollarSign, Mail } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const COLORS = ['hsl(201 96% 32%)', 'hsl(152 69% 31%)', 'hsl(12 76% 61%)', 'hsl(45 93% 47%)'];
 
 const AdminDashboard = () => {
-  const catData = [
-    { name: 'Clinics', value: listings.filter(l => l.category === 'Clinics').length },
-    { name: 'Real Estate', value: listings.filter(l => l.category === 'Real Estate').length },
-    { name: 'Fashion', value: listings.filter(l => l.category === 'Fashion').length },
-  ];
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const leadsByMonth = [
-    { month: 'Jan', leads: 2, requests: 1 },
-    { month: 'Feb', leads: 4, requests: 3 },
-    { month: 'Mar', leads: leads.length, requests: buyerRequests.length },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await dashboardService.getAdminStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
-  const invStats = getInvitationStats();
-  const totalRevenue = paymentTransactions.reduce((s, t) => s + t.amount, 0);
-  const proSubs = subscriptions.filter(s => s.planName === 'pro' && s.status === 'active').length;
+  if (loading || !stats) return <div className="p-8 text-center text-foreground">Loading dashboard data...</div>;
+
+  const { counts, revenue, invitations, category_distribution, time_series } = stats;
 
   const quickLinks = [
     { label: 'Manage Users', url: '/admin/users', icon: Users },
@@ -39,21 +45,20 @@ const AdminDashboard = () => {
       <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatsCard title="Users" value={users.length} icon={Users} />
-        <StatsCard title="Businesses" value={businesses.length} icon={Building2} />
-        <StatsCard title="Listings" value={listings.length} icon={FileText} />
-        <StatsCard title="Buyer Requests" value={buyerRequests.length} icon={ShoppingBag} />
-        <StatsCard title="Offers" value={offers.length} icon={Send} />
+        <StatsCard title="Users" value={counts.users} icon={Users} />
+        <StatsCard title="Businesses" value={counts.businesses} icon={Building2} />
+        <StatsCard title="Listings" value={counts.listings} icon={FileText} />
+        <StatsCard title="Buyer Requests" value={counts.requests} icon={ShoppingBag} />
+        <StatsCard title="Offers" value={counts.offers} icon={Send} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Leads" value={leads.length} icon={Inbox} />
-        <StatsCard title="Pro Subscriptions" value={proSubs} icon={CreditCard} />
-        <StatsCard title="Revenue" value={`${totalRevenue} EGP`} icon={DollarSign} />
-        <StatsCard title="Invitations Sent" value={invStats.total} icon={Mail} />
+        <StatsCard title="Total Leads" value={counts.leads} icon={Inbox} />
+        <StatsCard title="Pro Subscriptions" value={revenue.pro_subscriptions} icon={CreditCard} />
+        <StatsCard title="Revenue" value={`${revenue.total} EGP`} icon={DollarSign} />
+        <StatsCard title="Invitations Sent" value={invitations.total} icon={Mail} />
       </div>
 
-      {/* Quick Links */}
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {quickLinks.map(link => (
           <Link key={link.url} to={link.url}>
@@ -73,8 +78,8 @@ const AdminDashboard = () => {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={catData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                  {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                <Pie data={category_distribution} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                  {category_distribution.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -85,7 +90,7 @@ const AdminDashboard = () => {
           <CardHeader><CardTitle>Leads & Requests Over Time</CardTitle></CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={leadsByMonth}>
+              <BarChart data={time_series}>
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
@@ -97,29 +102,28 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Invitation Funnel */}
       <Card>
         <CardHeader><CardTitle>Invitation Funnel</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-around text-center">
             <div>
-              <p className="text-3xl font-bold text-foreground">{invStats.sent}</p>
+              <p className="text-3xl font-bold text-foreground">{invitations.sent}</p>
               <p className="text-sm text-muted-foreground">Sent</p>
             </div>
             <span className="text-2xl text-muted-foreground">→</span>
             <div>
-              <p className="text-3xl font-bold text-foreground">{invStats.opened}</p>
+              <p className="text-3xl font-bold text-foreground">{invitations.opened}</p>
               <p className="text-sm text-muted-foreground">Opened</p>
             </div>
             <span className="text-2xl text-muted-foreground">→</span>
             <div>
-              <p className="text-3xl font-bold text-foreground">{invStats.joined}</p>
+              <p className="text-3xl font-bold text-foreground">{invitations.joined}</p>
               <p className="text-sm text-muted-foreground">Joined</p>
             </div>
             <span className="text-2xl text-muted-foreground">→</span>
             <div>
               <p className="text-3xl font-bold text-foreground">
-                {invStats.total > 0 ? Math.round((invStats.joined / invStats.total) * 100) : 0}%
+                {invitations.total > 0 ? Math.round((invitations.joined / invitations.total) * 100) : 0}%
               </p>
               <p className="text-sm text-muted-foreground">Conversion</p>
             </div>
