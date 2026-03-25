@@ -2,25 +2,46 @@ version: '3.8'
 
 services:
   # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
+  db:
+    image: postgres:13
     container_name: marketmate-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: marketmate
-      POSTGRES_USER: marketmate
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-marketmate_dev}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U marketmate"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Frontend
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: marketmate-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=marketmate
+      - SECRET_KEY=your-secret-key-here
+    volumes:
+      - ./backend:/app
+
+  # React Frontend (Development)
   frontend:
     build:
       context: .
@@ -28,12 +49,12 @@ services:
     container_name: marketmate-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
-      postgres:
-        condition: service_healthy
+      backend:
+        condition: service_started
     environment:
-      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:8000/api/v1
 
 volumes:
   postgres_data:
