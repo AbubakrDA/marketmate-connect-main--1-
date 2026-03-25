@@ -1,5 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { getBusinessByOwner, getListingsByBusiness, getLeadsByBusiness, getAdsByBusiness, getOffersByBusiness, getOpenBuyerRequests } from '@/data/mock';
+import { getAdsByBusiness, getOffersByBusiness, getOpenBuyerRequests } from '@/data/mock';
 import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,13 +8,41 @@ import { List, Inbox, TrendingUp, Megaphone, ShoppingBag, Send, ArrowRight } fro
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
+import { useState, useEffect } from 'react';
+import { businessService, listingService, leadService } from '@/lib/api';
+import { Business, Listing, Lead } from '@/types';
 
 const BusinessDashboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const biz = getBusinessByOwner(user?.id || '');
-  const bListings = biz ? getListingsByBusiness(biz.id) : [];
-  const bLeads = biz ? getLeadsByBusiness(biz.id) : [];
+  
+  const [biz, setBiz] = useState<Business | null>(null);
+  const [bListings, setBListings] = useState<Listing[]>([]);
+  const [bLeads, setBLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.id) return;
+      try {
+        const business = await businessService.getByOwner(user.id);
+        setBiz(business);
+        
+        const [listings, leads] = await Promise.all([
+          listingService.getByBusiness(business.id),
+          leadService.getByBusiness(business.id)
+        ]);
+        setBListings(listings);
+        setBLeads(leads);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user?.id]);
+
   const bAds = biz ? getAdsByBusiness(biz.id) : [];
   const bOffers = biz ? getOffersByBusiness(biz.id) : [];
   const matchingRequests = biz ? getOpenBuyerRequests().filter(r => r.category === biz.category) : [];
@@ -27,6 +55,8 @@ const BusinessDashboard = () => {
     { name: t('won'), value: won },
     { name: t('lost'), value: bLeads.filter(l => l.status === 'lost').length },
   ];
+
+  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
 
   return (
     <div className="space-y-6">
@@ -70,7 +100,7 @@ const BusinessDashboard = () => {
             <div className="space-y-2">
               {bLeads.slice(0, 5).map(l => (
                 <Card key={l.id}><CardContent className="flex items-center justify-between p-4">
-                  <div><p className="font-medium text-foreground">{l.name}</p><p className="text-sm text-muted-foreground truncate max-w-xs">{l.message}</p></div>
+                  <div><p className="font-medium text-foreground">{l.name}</p><p className="text-sm text-muted-foreground truncate max-w-xs">{l.message || 'No message'}</p></div>
                   <Badge variant="secondary">{l.status}</Badge>
                 </CardContent></Card>
               ))}

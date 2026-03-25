@@ -1,7 +1,7 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import crud, schemas
+from app import crud, schemas, models
 from app.api import deps
 
 router = APIRouter()
@@ -30,4 +30,18 @@ def read_business(
     biz = crud.business.get(db, id=id)
     if not biz:
         raise HTTPException(status_code=404, detail="Business not found")
+    return biz
+
+@router.get("/owner/{owner_id}", response_model=schemas.business.Business)
+def read_business_by_owner(
+    *,
+    db: Session = Depends(deps.get_db),
+    owner_id: str,
+) -> Any:
+    """
+    Get business by owner ID.
+    """
+    biz = db.query(models.user_business.Business).filter(models.user_business.Business.owner_user_id == owner_id).first()
+    if not biz:
+        raise HTTPException(status_code=404, detail="Business not found for this user")
     return biz

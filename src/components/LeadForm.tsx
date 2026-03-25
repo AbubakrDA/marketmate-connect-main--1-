@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Send } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { leadService } from '@/lib/api';
 
 interface Props {
   listingId: string;
@@ -18,6 +19,7 @@ export const LeadForm = ({ listingId, businessId, onSubmit }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -25,15 +27,31 @@ export const LeadForm = ({ listingId, businessId, onSubmit }: Props) => {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       toast({ title: t('fill_required'), variant: 'destructive' });
       return;
     }
-    toast({ title: t('inquiry_sent'), description: t('business_will_contact') });
-    setForm(prev => ({ ...prev, message: '' }));
-    onSubmit?.();
+    
+    setIsSubmitting(true);
+    try {
+      await leadService.submit({
+        id: `lead_${Date.now()}`,
+        listing_id: listingId,
+        business_id: businessId,
+        buyer_user_id: user?.id || 'anonymous',
+        ...form,
+        status: 'new'
+      });
+      toast({ title: t('inquiry_sent'), description: t('business_will_contact') });
+      setForm(prev => ({ ...prev, message: '' }));
+      onSubmit?.();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to send inquiry. Please try again.', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,8 +74,8 @@ export const LeadForm = ({ listingId, businessId, onSubmit }: Props) => {
         <Label htmlFor="lead-message">{t('message')} *</Label>
         <Textarea id="lead-message" value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} placeholder={t('interested_placeholder')} rows={4} required />
       </div>
-      <Button type="submit" className="w-full bg-coral text-coral-foreground hover:bg-coral/90">
-        <Send className="mr-2 h-4 w-4" /> {t('send_inquiry')}
+      <Button type="submit" disabled={isSubmitting} className="w-full bg-coral text-coral-foreground hover:bg-coral/90">
+        <Send className="mr-2 h-4 w-4" /> {isSubmitting ? 'Sending...' : t('send_inquiry')}
       </Button>
     </form>
   );

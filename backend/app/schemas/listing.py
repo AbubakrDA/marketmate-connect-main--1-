@@ -1,6 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
+from .business import Business
 
 class ListingBase(BaseModel):
     title: Optional[str] = None
@@ -37,4 +38,4 @@ class ListingInDBBase(ListingBase):
         from_attributes = True
 
 class Listing(ListingInDBBase):
-    pass
+    business: Optional[Business] = None

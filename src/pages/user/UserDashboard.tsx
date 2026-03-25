@@ -1,5 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { getRecommendationsByUser, getLeadsByUser, listings, getBuyerRequestsByUser, getOffersByRequest, getWalletByUser } from '@/data/mock';
+import { getRecommendationsByUser, getBuyerRequestsByUser, getOffersByRequest, getWalletByUser } from '@/data/mock';
 import { ListingCard } from '@/components/ListingCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,16 +8,42 @@ import { Lightbulb, FileText, Send, Wallet, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WalletBadge } from '@/components/WalletBadge';
 import { useTranslation } from '@/i18n';
+import { useState, useEffect } from 'react';
+import { listingService, leadService } from '@/lib/api';
+import { Listing, Lead } from '@/types';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  
+  const [recommended, setRecommended] = useState<Listing[]>([]);
+  const [myLeads, setMyLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [listings, leads] = await Promise.all([
+          listingService.getAll(),
+          // In a real app we'd have leadService.getByUser
+          leadService.getAll() 
+        ]);
+        setRecommended(listings.slice(0, 3));
+        setMyLeads(leads.filter((l: any) => l.buyer_user_id === user?.id));
+      } catch (error) {
+        console.error('Error fetching user dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user?.id]);
+
   const recs = getRecommendationsByUser(user?.id || '');
-  const myLeads = getLeadsByUser(user?.id || '');
   const requests = getBuyerRequestsByUser(user?.id || '');
   const totalOffers = requests.reduce((sum, r) => sum + getOffersByRequest(r.id).length, 0);
-  const wallet = getWalletByUser(user?.id || '');
-  const recommended = listings.filter(l => l.status === 'active').slice(0, 3);
+
+  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
 
   return (
     <div className="space-y-6">
@@ -32,7 +58,6 @@ const UserDashboard = () => {
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{recs.length}</p><p className="text-sm text-muted-foreground">{t('recommendations')}</p></CardContent></Card>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Link to="/user/requests">
           <Card className="group transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">

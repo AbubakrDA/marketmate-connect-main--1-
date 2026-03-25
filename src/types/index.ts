@@ -58,6 +58,7 @@ export interface Listing {
   videoUrl?: string;
   status: ListingStatus;
   createdAt: string;
+  business?: Business;
 }
 
 export interface Lead {

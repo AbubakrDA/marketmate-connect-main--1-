@@ -27,3 +27,14 @@ def read_leads(
     Retrieve leads.
     """
     return crud.lead.get_multi(db, skip=skip, limit=limit)
+
+@router.get("/business/{business_id}", response_model=List[schemas.lead.Lead])
+def read_business_leads(
+    *,
+    db: Session = Depends(deps.get_db),
+    business_id: str,
+) -> Any:
+    """
+    Get leads by business ID.
+    """
+    return crud.lead.get_by_business(db, business_id=business_id)

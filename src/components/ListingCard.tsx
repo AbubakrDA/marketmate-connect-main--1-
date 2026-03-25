@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Listing } from '@/types';
+import { Listing, Business } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
@@ -9,11 +9,12 @@ import { useTranslation } from '@/i18n';
 
 interface Props {
   listing: Listing;
+  business?: Business;
 }
 
-export const ListingCard = ({ listing }: Props) => {
-  const business = getBusinessById(listing.businessId);
+export const ListingCard = ({ listing, business: propsBusiness }: Props) => {
   const { t } = useTranslation();
+  const business = propsBusiness || listing.business || getBusinessById(listing.businessId);
 
   return (
     <Link to={`/listing/${listing.id}`}>

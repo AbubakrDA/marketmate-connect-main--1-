@@ -31,8 +31,19 @@ export const authService = {
     const response = await api.post('/register', userData);
     return response.data;
   },
+};
+
+export const userService = {
   getMe: async () => {
     const response = await api.get('/users/me');
+    return response.data;
+  },
+  getAll: async () => {
+    const response = await api.get('/users/');
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get(`/users/${id}`);
     return response.data;
   },
 };
@@ -44,6 +55,10 @@ export const businessService = {
   },
   getById: async (id: string) => {
     const response = await api.get(`/businesses/${id}`);
+    return response.data;
+  },
+  getByOwner: async (ownerId: string) => {
+    const response = await api.get(`/businesses/owner/${ownerId}`);
     return response.data;
   },
 };
@@ -66,6 +81,14 @@ export const listingService = {
 export const leadService = {
   submit: async (leadData: any) => {
     const response = await api.post('/leads/', leadData);
+    return response.data;
+  },
+  getByBusiness: async (businessId: string) => {
+    const response = await api.get(`/leads/business/${businessId}`);
+    return response.data;
+  },
+  getAll: async () => {
+    const response = await api.get('/leads/');
     return response.data;
   },
 };
