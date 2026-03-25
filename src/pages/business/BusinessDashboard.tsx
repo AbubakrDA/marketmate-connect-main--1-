@@ -19,6 +19,7 @@ const BusinessDashboard = () => {
   const [biz, setBiz] = useState<Business | null>(null);
   const [bListings, setBListings] = useState<Listing[]>([]);
   const [bLeads, setBLeads] = useState<Lead[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,12 +29,14 @@ const BusinessDashboard = () => {
         const business = await businessService.getByOwner(user.id);
         setBiz(business);
         
-        const [listings, leads] = await Promise.all([
+        const [listings, leads, bizStats] = await Promise.all([
           listingService.getByBusiness(business.id),
-          leadService.getByBusiness(business.id)
+          leadService.getByBusiness(business.id),
+          dashboardService.getBusinessStats(business.id)
         ]);
         setBListings(listings);
         setBLeads(leads);
+        setStats(bizStats);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -43,8 +46,9 @@ const BusinessDashboard = () => {
     fetchData();
   }, [user?.id]);
 
+  // Keep some mock defaults for features not yet fully implemented in backend endpoints
   const bAds = biz ? getAdsByBusiness(biz.id) : [];
-  const bOffers = biz ? getOffersByBusiness(biz.id) : [];
+  const bOffers = stats ? { length: stats.counts.offers } : { length: 0 };
   const matchingRequests = biz ? getOpenBuyerRequests().filter(r => r.category === biz.category) : [];
   const won = bLeads.filter(l => l.status === 'won').length;
   const convRate = bLeads.length > 0 ? Math.round((won / bLeads.length) * 100) : 0;
