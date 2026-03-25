@@ -17,9 +17,9 @@ const RegisterBusiness = () => {
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', businessName: '', category: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = register({ name: form.name, email: form.email, password: form.password, phone: form.phone, role: 'business' });
+    const result = await register({ name: form.name, email: form.email, password: form.password, phone: form.phone, role: 'business' });
     if (result.success) { toast({ title: t('business_registered') }); navigate('/business'); }
     else toast({ title: result.error || t('registration_failed'), variant: 'destructive' });
   };

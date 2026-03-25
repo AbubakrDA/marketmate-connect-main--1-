@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '@/types';
-import { authService } from '@/lib/api';
+import { authService, userService } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -43,9 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('marketmate_token', data.access_token);
       
       // In a real app, we'd fetch the user profile here
-      // For now, let's assume the user info is returned or we use a placeholder
-      // For seeding purposes, we'll try to find the user after login
-      const profile = await authService.getMe();
+      const profile = await userService.getMe();
       setUser(profile);
       localStorage.setItem('marketmate_user', JSON.stringify(profile));
       return { success: true };

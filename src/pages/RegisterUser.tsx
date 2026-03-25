@@ -15,9 +15,9 @@ const RegisterUser = () => {
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = register({ ...form, role: 'user' });
+    const result = await register({ ...form, role: 'user' });
     if (result.success) { toast({ title: t('account_created') }); navigate('/'); }
     else toast({ title: result.error || t('registration_failed'), variant: 'destructive' });
   };
