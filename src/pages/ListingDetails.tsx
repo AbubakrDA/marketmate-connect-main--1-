@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { getListingById, getBusinessById, listings } from '@/data/mock';
+import { useState, useEffect } from 'react';
 import { LeadForm } from '@/components/LeadForm';
 import { ListingCard } from '@/components/ListingCard';
 import { Badge } from '@/components/ui/badge';
@@ -7,16 +7,41 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
+import { listingService, businessService } from '@/lib/api';
+import { Listing, Business } from '@/types';
 
 const ListingDetails = () => {
   const { t } = useTranslation();
   const { id } = useParams();
-  const listing = getListingById(id || '');
-  const business = listing ? getBusinessById(listing.businessId) : null;
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [similar, setSimilar] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      try {
+        const lData = await listingService.getById(id);
+        setListing(lData);
+        
+        const [bData, allListings] = await Promise.all([
+          businessService.getById(lData.businessId),
+          listingService.getAll()
+        ]);
+        setBusiness(bData);
+        setSimilar(allListings.filter((l: Listing) => l.category === lData.category && l.id !== lData.id && l.status === 'active').slice(0, 3));
+      } catch (error) {
+        console.error('Error fetching listing details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div className="container mx-auto px-4 py-16 text-center">Loading details...</div>;
   if (!listing) return <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">{t('listing_not_found')}</div>;
-
-  const similar = listings.filter(l => l.category === listing.category && l.id !== listing.id && l.status === 'active').slice(0, 3);
 
   return (
     <div className="container mx-auto px-4 py-8">

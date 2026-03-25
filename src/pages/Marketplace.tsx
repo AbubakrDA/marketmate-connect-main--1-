@@ -1,12 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { listings } from '@/data/mock';
 import { ListingCard } from '@/components/ListingCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CATEGORIES, AREAS } from '@/types';
+import { CATEGORIES, AREAS, Listing } from '@/types';
 import { Search } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { listingService } from '@/lib/api';
 
 const Marketplace = () => {
   const { t } = useTranslation();
@@ -14,10 +14,26 @@ const Marketplace = () => {
   const initialCat = searchParams.get('category') || '';
   const initialSearch = searchParams.get('search') || '';
 
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState(initialCat);
   const [area, setArea] = useState('');
   const [sort, setSort] = useState('newest');
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const data = await listingService.getAll();
+        setListings(data);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchListings();
+  }, []);
 
   const filtered = useMemo(() => {
     let result = listings.filter(l => l.status === 'active');
@@ -26,9 +42,9 @@ const Marketplace = () => {
     if (area) result = result.filter(l => l.area === area);
     if (sort === 'price-asc') result.sort((a, b) => a.priceEgp - b.priceEgp);
     else if (sort === 'price-desc') result.sort((a, b) => b.priceEgp - a.priceEgp);
-    else result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    else if (l => l.createdAt) result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return result;
-  }, [search, category, area, sort]);
+  }, [search, category, area, sort, listings]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -64,7 +80,9 @@ const Marketplace = () => {
         </Select>
       </div>
 
-      {filtered.length > 0 ? (
+      {loading ? (
+        <div className="mt-16 text-center">Loading marketplace...</div>
+      ) : filtered.length > 0 ? (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(l => <ListingCard key={l.id} listing={l} />)}
         </div>

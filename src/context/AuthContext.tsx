@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '@/types';
-import { users as mockUsers } from '@/data/mock';
+import { authService } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  register: (data: { name: string; email: string; password: string; phone: string; role: UserRole }) => { success: boolean; error?: string };
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { name: string; email: string; password: string; phone: string; role: UserRole }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -16,43 +17,64 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('marketmate_user');
-    if (stored) {
-      try { setUser(JSON.parse(stored)); } catch { localStorage.removeItem('marketmate_user'); }
-    }
+    const initAuth = async () => {
+      const token = localStorage.getItem('marketmate_token');
+      const storedUser = localStorage.getItem('marketmate_user');
+      
+      if (token && storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (error) {
+          localStorage.removeItem('marketmate_token');
+          localStorage.removeItem('marketmate_user');
+        }
+      }
+      setIsLoading(false);
+    };
+    initAuth();
   }, []);
 
-  const login = (email: string, password: string) => {
-    const found = mockUsers.find(u => u.email === email && u.password === password);
-    if (!found) return { success: false, error: 'Invalid email or password' };
-    setUser(found);
-    localStorage.setItem('marketmate_user', JSON.stringify(found));
-    return { success: true };
+  const login = async (email: string, password: string) => {
+    try {
+      const data = await authService.login(email, password);
+      localStorage.setItem('marketmate_token', data.access_token);
+      
+      // In a real app, we'd fetch the user profile here
+      // For now, let's assume the user info is returned or we use a placeholder
+      // For seeding purposes, we'll try to find the user after login
+      const profile = await authService.getMe();
+      setUser(profile);
+      localStorage.setItem('marketmate_user', JSON.stringify(profile));
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+    }
   };
 
-  const register = (data: { name: string; email: string; password: string; phone: string; role: UserRole }) => {
-    const exists = mockUsers.find(u => u.email === data.email);
-    if (exists) return { success: false, error: 'Email already registered' };
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      ...data,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    mockUsers.push(newUser);
-    setUser(newUser);
-    localStorage.setItem('marketmate_user', JSON.stringify(newUser));
-    return { success: true };
+  const register = async (data: { name: string; email: string; password: string; phone: string; role: UserRole }) => {
+    try {
+      const userData = {
+        id: `u${Date.now()}`,
+        ...data,
+      };
+      await authService.register(userData);
+      return await login(data.email, data.password);
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('marketmate_token');
     localStorage.removeItem('marketmate_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

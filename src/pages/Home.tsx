@@ -1,33 +1,59 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { listings, businesses, getActiveSaleCampaigns, getOpenBuyerRequests } from '@/data/mock';
+import { getActiveSaleCampaigns, getOpenBuyerRequests } from '@/data/mock';
 import { ListingCard } from '@/components/ListingCard';
 import { SaleCampaignCard } from '@/components/SaleCampaignCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Stethoscope, Building, Shirt, ArrowRight, Users, Store, TrendingUp, Megaphone, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n';
+import { listingService, businessService } from '@/lib/api';
+import { Listing, Business } from '@/types';
 
 const Home = () => {
   const [search, setSearch] = useState('');
+  const [featured, setFeatured] = useState<Listing[]>([]);
+  const [businessesCount, setBusinessesCount] = useState(0);
+  const [listingsCount, setListingsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { t } = useTranslation();
-  const featured = listings.filter(l => l.status === 'active').slice(0, 6);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [lData, bData] = await Promise.all([
+          listingService.getAll(),
+          businessService.getAll()
+        ]);
+        setFeatured(lData.slice(0, 6));
+        setListingsCount(lData.length);
+        setBusinessesCount(bData.length);
+      } catch (error) {
+        console.error('Error fetching home data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const sales = getActiveSaleCampaigns().slice(0, 3);
   const openRequests = getOpenBuyerRequests().length;
 
   const categories = [
-    { name: t('clinics'), key: 'Clinics', icon: Stethoscope, color: 'bg-info/10 text-info', count: listings.filter(l => l.category === 'Clinics').length },
-    { name: t('real_estate'), key: 'Real Estate', icon: Building, color: 'bg-success/10 text-success', count: listings.filter(l => l.category === 'Real Estate').length },
-    { name: t('fashion'), key: 'Fashion', icon: Shirt, color: 'bg-coral/10 text-coral', count: listings.filter(l => l.category === 'Fashion').length },
+    { name: t('clinics'), key: 'Clinics', icon: Stethoscope, color: 'bg-info/10 text-info', count: featured.filter(l => l.category === 'Clinics').length },
+    { name: t('real_estate'), key: 'Real Estate', icon: Building, color: 'bg-success/10 text-success', count: featured.filter(l => l.category === 'Real Estate').length },
+    { name: t('fashion'), key: 'Fashion', icon: Shirt, color: 'bg-coral/10 text-coral', count: featured.filter(l => l.category === 'Fashion').length },
   ];
 
   const stats = [
-    { label: t('businesses_stat'), value: businesses.length, icon: Store },
-    { label: t('listings_stat'), value: listings.length, icon: TrendingUp },
+    { label: t('businesses_stat'), value: businessesCount, icon: Store },
+    { label: t('listings_stat'), value: listingsCount, icon: TrendingUp },
     { label: t('happy_users'), value: '500+', icon: Users },
   ];
 
@@ -156,7 +182,11 @@ const Home = () => {
             <Button variant="outline" asChild><Link to="/marketplace">{t('view_all')} <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
           </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map(l => <ListingCard key={l.id} listing={l} />)}
+            {loading ? (
+              <p>Loading featured deals...</p>
+            ) : (
+              featured.map(l => <ListingCard key={l.id} listing={l} />)
+            )}
           </div>
         </div>
       </section>
