@@ -80,7 +80,20 @@ export const listingService = {
 
 export const leadService = {
   submit: async (leadData: any) => {
-    const response = await api.post('/leads/', leadData);
+    // Ensure we send the correct schema fields
+    const formattedData = {
+      id: leadData.id || `lead_${Date.now()}`,
+      listing_id: leadData.listing_id || leadData.listingId,
+      business_id: leadData.business_id || leadData.businessId,
+      name: leadData.name || 'Anonymous User',
+      email: leadData.email || 'anonymous@example.com',
+      phone: leadData.phone || '',
+      message: leadData.message || '',
+      lead_type: leadData.lead_type || 'whatsapp',
+      price: leadData.price || 0.0,
+      status: 'new'
+    };
+    const response = await api.post('/leads/', formattedData);
     return response.data;
   },
   getByBusiness: async (businessId: string) => {

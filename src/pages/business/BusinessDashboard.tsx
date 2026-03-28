@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { businessService, listingService, leadService } from '@/lib/api';
+import { businessService, listingService, leadService, dashboardService } from '@/lib/api';
 import { Business, Listing, Lead } from '@/types';
 
 const BusinessDashboard = () => {
@@ -53,12 +53,11 @@ const BusinessDashboard = () => {
   const won = bLeads.filter(l => l.status === 'won').length;
   const convRate = bLeads.length > 0 ? Math.round((won / bLeads.length) * 100) : 0;
 
-  const chartData = [
-    { name: t('new'), value: bLeads.filter(l => l.status === 'new').length },
-    { name: t('contacted'), value: bLeads.filter(l => l.status === 'contacted').length },
-    { name: t('won'), value: won },
-    { name: t('lost'), value: bLeads.filter(l => l.status === 'lost').length },
-  ];
+  const chartData = stats ? [
+    { name: t('new'), value: stats.leads.new },
+    { name: t('contacted'), value: stats.leads.contacted },
+    { name: t('closed'), value: stats.leads.closed },
+  ] : [];
 
   if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
 
@@ -67,12 +66,16 @@ const BusinessDashboard = () => {
       <h1 className="text-2xl font-bold text-foreground">{t('business_dashboard')}</h1>
       {biz ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard title={t('listings')} value={bListings.length} icon={List} />
-            <StatsCard title={t('total_leads')} value={bLeads.length} icon={Inbox} />
+            <StatsCard title={t('total_leads')} value={stats?.leads?.total || bLeads.length} icon={Inbox} />
+            <StatsCard 
+              title={t('leads_remaining')} 
+              value={stats?.subscription?.leads_remaining ?? 'N/A'} 
+              icon={ShoppingBag} 
+              description={stats?.subscription?.plan ? `${stats.subscription.plan} plan` : undefined}
+            />
             <StatsCard title={t('conversion')} value={`${convRate}%`} icon={TrendingUp} />
-            <StatsCard title={t('offers_sent')} value={bOffers.length} icon={Send} />
-            <StatsCard title={t('ad_campaigns')} value={bAds.length} icon={Megaphone} />
           </div>
 
           {matchingRequests.length > 0 && (

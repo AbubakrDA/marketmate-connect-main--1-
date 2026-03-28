@@ -42,6 +42,7 @@ export const LeadForm = ({ listingId, businessId, onSubmit }: Props) => {
         business_id: businessId,
         buyer_user_id: user?.id || 'anonymous',
         ...form,
+        lead_type: 'message',
         status: 'new'
       });
       toast({ title: t('inquiry_sent'), description: t('business_will_contact') });
