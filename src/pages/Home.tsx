@@ -89,33 +89,37 @@ const Home = () => {
       </section>
 
       {/* Post What You Need CTA */}
-      <section className="border-b bg-coral/5 py-12">
+      <section className="border-y bg-coral/5 py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
+          <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
             <div className="text-center md:text-left">
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                <Megaphone className="h-6 w-6 text-coral" />
-                <h2 className="text-2xl font-bold text-foreground">{t('post_what_you_need')}</h2>
+              <div className="flex items-center gap-3 justify-center md:justify-start mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-coral text-coral-foreground">
+                  <Megaphone className="h-6 w-6" />
+                </div>
+                <h2 className="text-3xl font-extrabold text-foreground md:text-4xl">{t('post_what_you_need')}</h2>
               </div>
-              <p className="text-muted-foreground max-w-lg">{t('post_request_desc')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <Badge variant="secondary" className="mr-1">{openRequests}</Badge> {t('active_requests_count')}
-              </p>
+              <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">{t('post_request_desc')}</p>
+              <div className="mt-4 flex items-center gap-2 justify-center md:justify-start">
+                <Badge variant="secondary" className="px-2 py-0.5 text-sm bg-coral/20 text-coral border-none">{openRequests}</Badge> 
+                <span className="text-sm font-medium text-muted-foreground">{t('active_requests_count')}</span>
+              </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-4">
               {isAuthenticated && user?.role === 'user' ? (
-                <Button className="bg-coral text-coral-foreground hover:bg-coral/90" size="lg" onClick={() => navigate('/user/requests')}>
-                  <FileText className="mr-2 h-4 w-4" />{t('post_request')}
+                <Button className="bg-coral text-coral-foreground hover:bg-coral/90 h-14 px-8 text-lg font-bold shadow-lg shadow-coral/20" onClick={() => navigate('/user/requests')}>
+                  <FileText className="mr-2 h-5 w-5" />{t('post_request')}
                 </Button>
               ) : (
-                <Button className="bg-coral text-coral-foreground hover:bg-coral/90" size="lg" onClick={() => navigate('/register')}>
-                  {t('get_started')} <ArrowRight className="ml-1 h-4 w-4" />
+                <Button className="bg-coral text-coral-foreground hover:bg-coral/90 h-14 px-8 text-lg font-bold shadow-lg shadow-coral/20" onClick={() => navigate('/register')}>
+                  {t('get_started')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               )}
             </div>
           </div>
         </div>
       </section>
+
 
       {/* Stats */}
       <section className="border-b bg-card py-8">

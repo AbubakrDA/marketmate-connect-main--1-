@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+import { isFeatureEnabled } from '@/lib/feature-flags';
+
 export const DashboardSidebar = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -59,7 +61,7 @@ export const DashboardSidebar = () => {
     { title: t('my_leads'), url: '/user/leads', icon: Inbox },
     { title: t('deal_hunters'), url: '/user/deal-hunters', icon: Search },
     { title: t('favorites'), url: '/user/favorites', icon: Heart },
-    { title: t('market_insights'), url: '/user/ai-insights', icon: Brain },
+    { title: t('market_insights'), url: '/user/ai-insights', icon: Brain, feature: 'enableAIInsights' },
     { title: t('saved_interests'), url: '/user/interests', icon: Star },
     { title: t('notifications'), url: '/user/notifications', icon: Bell },
   ];
@@ -74,21 +76,22 @@ export const DashboardSidebar = () => {
     { title: t('create_listing'), url: '/business/listings/create', icon: PlusCircle },
     { title: t('leads'), url: '/business/leads', icon: Inbox },
     { title: t('sale_campaigns'), url: '/business/sales', icon: Tag },
-    { title: t('demand_radar'), url: '/business/demand-radar', icon: Radar, premium: true },
+    { title: t('demand_radar'), url: '/business/demand-radar', icon: Radar, premium: true, feature: 'enableDemandRadar' },
     { title: t('group_deals'), url: '/business/group-deals', icon: Users },
-    { title: t('opportunity_map'), url: '/business/opportunity-map', icon: BookOpen, premium: true },
-    { title: t('ai_analytics'), url: '/business/ai-analytics', icon: Brain, premium: true },
+    { title: t('opportunity_map'), url: '/business/opportunity-map', icon: BookOpen, premium: true, feature: 'enableOpportunityMap' },
+    { title: t('ai_analytics'), url: '/business/ai-analytics', icon: Brain, premium: true, feature: 'enableAIAnalytics' },
     { title: t('favorite_customers'), url: '/business/favorite-customers', icon: Star },
     { title: t('recommendations'), url: '/business/recommendations', icon: Lightbulb },
-    { title: t('reports'), url: '/business/reports', icon: BarChart3 },
+    { title: t('reports'), url: '/business/reports', icon: BarChart3, feature: 'enableAdvancedAnalytics' },
     { title: t('ads'), url: '/business/ads', icon: Megaphone },
     { title: t('subscription'), url: '/business/subscription', icon: CreditCard },
-    { title: t('automations'), url: '/business/automations', icon: Zap, premium: true },
+    { title: t('automations'), url: '/business/automations', icon: Zap, premium: true, feature: 'enableAutomations' },
     { title: t('b2b_marketplace'), url: '/business/b2b', icon: Factory },
     { title: t('b2b_my_requests'), url: '/business/b2b/my-requests', icon: ShoppingBag },
     { title: t('b2b_my_offers'), url: '/business/b2b/my-offers', icon: Send },
     { title: t('b2b_my_listings'), url: '/business/b2b/my-listings', icon: Package },
   ];
+
 
   const adminItems = [
     { title: t('dashboard'), url: '/admin', icon: LayoutDashboard },
@@ -103,7 +106,9 @@ export const DashboardSidebar = () => {
     { title: t('b2b_admin'), url: '/admin/b2b', icon: Factory },
   ];
 
-  const items = user?.role === 'admin' ? adminItems : user?.role === 'business' ? businessItems : userItems;
+  const items = (user?.role === 'admin' ? adminItems : user?.role === 'business' ? businessItems : userItems)
+    .filter(item => !('feature' in item) || isFeatureEnabled((item as any).feature));
+
   const label = user?.role === 'admin' ? t('admin_panel') : user?.role === 'business' ? t('business_dashboard') : t('my_account');
 
   return (

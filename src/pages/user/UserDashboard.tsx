@@ -11,6 +11,8 @@ import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
 import { listingService, leadService, requestService, offerService } from '@/lib/api';
 import { Listing, Lead } from '@/types';
+import { isFeatureEnabled } from '@/lib/feature-flags';
+
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -63,7 +65,10 @@ const UserDashboard = () => {
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{myRequests.length}</p><p className="text-sm text-muted-foreground">{t('my_requests')}</p></CardContent></Card>
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{totalOffers}</p><p className="text-sm text-muted-foreground">{t('offers_received')}</p></CardContent></Card>
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{myLeads.length}</p><p className="text-sm text-muted-foreground">{t('my_inquiries')}</p></CardContent></Card>
-        <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{recs.length}</p><p className="text-sm text-muted-foreground">{t('recommendations')}</p></CardContent></Card>
+        {isFeatureEnabled('enableAIInsights') && (
+          <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{recs.length}</p><p className="text-sm text-muted-foreground">{t('recommendations')}</p></CardContent></Card>
+        )}
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -97,7 +102,7 @@ const UserDashboard = () => {
         </Link>
       </div>
 
-      {recs.length > 0 && (
+      {isFeatureEnabled('enableAIInsights') && recs.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-3">{t('for_you')}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -107,6 +112,7 @@ const UserDashboard = () => {
           </div>
         </div>
       )}
+
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-3">{t('recommended_listings')}</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{recommended.map(l => <ListingCard key={l.id} listing={l} />)}</div>

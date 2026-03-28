@@ -8,6 +8,8 @@ import { LanguageToggle } from './LanguageToggle';
 import { useState } from 'react';
 import { CreateRequestDialog } from './CreateRequestDialog';
 
+import { isFeatureEnabled } from '@/lib/feature-flags';
+
 export const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { t } = useTranslation();
@@ -33,8 +35,9 @@ export const Navbar = () => {
     { to: '/group-deals', label: t('group_deals') },
     { to: '/businesses', label: t('businesses') },
     { to: '/map', label: t('map') },
-    { to: '/smart-map', label: t('smart_map') },
-  ];
+    { to: '/smart-map', label: t('smart_map'), feature: 'enableOpportunityMap' },
+  ].filter(link => !link.feature || isFeatureEnabled(link.feature as any));
+
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">

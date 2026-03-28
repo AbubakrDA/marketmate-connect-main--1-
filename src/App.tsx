@@ -2,12 +2,26 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { I18nProvider } from "@/i18n";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { isFeatureEnabled, FEATURE_FLAGS } from "@/lib/feature-flags";
+
+const FeatureGatedRoute = ({ 
+  feature, 
+  children, 
+  redirectTo = "/" 
+}: { 
+  feature: keyof typeof FEATURE_FLAGS; 
+  children: React.ReactNode;
+  redirectTo?: string;
+}) => {
+  return isFeatureEnabled(feature) ? <>{children}</> : <Navigate to={redirectTo} replace />;
+};
+
 
 // Public pages
 import Home from "./pages/Home";
@@ -96,11 +110,12 @@ const App = () => (
                 <Route path="/businesses" element={<BusinessesDirectory />} />
                 <Route path="/businesses/:id" element={<BusinessProfilePublic />} />
                 <Route path="/map" element={<MapPage />} />
-                <Route path="/smart-map" element={<SmartMap />} />
+                <Route path="/smart-map" element={<FeatureGatedRoute feature="enableOpportunityMap"><SmartMap /></FeatureGatedRoute>} />
                 <Route path="/group-deals" element={<GroupDeals />} />
                 <Route path="/group-deals/:id" element={<GroupDealDetail />} />
                 <Route path="/seasonal-sales" element={<SeasonalSales />} />
-                <Route path="/demo/ai-analytics" element={<AIAnalytics />} />
+                <Route path="/demo/ai-analytics" element={<FeatureGatedRoute feature="enableAIAnalytics"><AIAnalytics /></FeatureGatedRoute>} />
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<RegisterUser />} />
                 <Route path="/register/business" element={<RegisterBusiness />} />
@@ -118,8 +133,9 @@ const App = () => (
                 <Route path="/user/chat" element={<UserChat />} />
                 <Route path="/user/deal-hunters" element={<DealHunters />} />
                 <Route path="/user/favorites" element={<Favorites />} />
-                <Route path="/user/ai-insights" element={<UserAIInsights />} />
+                <Route path="/user/ai-insights" element={<FeatureGatedRoute feature="enableAIInsights" redirectTo="/user"><UserAIInsights /></FeatureGatedRoute>} />
               </Route>
+
 
               {/* Business dashboard */}
               <Route element={<ProtectedRoute allowedRoles={['business']}><DashboardLayout /></ProtectedRoute>}>
@@ -130,19 +146,20 @@ const App = () => (
                 <Route path="/business/listings/edit/:id" element={<EditListing />} />
                 <Route path="/business/leads" element={<LeadsInbox />} />
                 <Route path="/business/recommendations" element={<Recommendations />} />
-                <Route path="/business/reports" element={<Reports />} />
+                <Route path="/business/reports" element={<FeatureGatedRoute feature="enableAdvancedAnalytics" redirectTo="/business"><Reports /></FeatureGatedRoute>} />
                 <Route path="/business/ads" element={<AdsManager />} />
                 <Route path="/business/subscription" element={<SubscriptionPage />} />
                 <Route path="/business/requests" element={<BrowseRequests />} />
                 <Route path="/business/offers" element={<BusinessOffers />} />
                 <Route path="/business/chat" element={<BusinessChat />} />
                 <Route path="/business/sales" element={<SaleCampaigns />} />
-                <Route path="/business/ai-analytics" element={<AIAnalytics />} />
+                <Route path="/business/ai-analytics" element={<FeatureGatedRoute feature="enableAIAnalytics" redirectTo="/business"><AIAnalytics /></FeatureGatedRoute>} />
                 <Route path="/business/favorite-customers" element={<FavoriteCustomers />} />
-                <Route path="/business/demand-radar" element={<DemandRadar />} />
+                <Route path="/business/demand-radar" element={<FeatureGatedRoute feature="enableDemandRadar" redirectTo="/business"><DemandRadar /></FeatureGatedRoute>} />
                 <Route path="/business/group-deals" element={<BusinessGroupDeals />} />
-                <Route path="/business/opportunity-map" element={<BusinessOpportunityMap />} />
-                <Route path="/business/automations" element={<Automations />} />
+                <Route path="/business/opportunity-map" element={<FeatureGatedRoute feature="enableOpportunityMap" redirectTo="/business"><BusinessOpportunityMap /></FeatureGatedRoute>} />
+                <Route path="/business/automations" element={<FeatureGatedRoute feature="enableAutomations" redirectTo="/business"><Automations /></FeatureGatedRoute>} />
+
                 <Route path="/business/b2b" element={<B2BMarketplace />} />
                 <Route path="/business/b2b/my-requests" element={<B2BMyRequests />} />
                 <Route path="/business/b2b/request/:id" element={<B2BRequestDetail />} />

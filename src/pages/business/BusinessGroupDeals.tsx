@@ -93,7 +93,8 @@ const BusinessGroupDeals = () => {
                 <div><Label>{t('group_price')} ({t('egp')})</Label><Input type="number" value={form.dealPrice} onChange={e => setForm(f => ({ ...f, dealPrice: e.target.value }))} /></div>
                 <div><Label>{t('required_participants')}</Label><Input type="number" value={form.requiredParticipants} onChange={e => setForm(f => ({ ...f, requiredParticipants: e.target.value }))} /></div>
               </div>
-              <div><Label>{t('end_date')}</Label><Input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+              <div><Label>{t('deal_end_date')}</Label><Input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+
               <Button onClick={handleCreate} className="w-full">{t('create_group_deal')}</Button>
             </div>
           </DialogContent>

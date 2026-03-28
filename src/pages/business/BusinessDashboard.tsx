@@ -11,6 +11,8 @@ import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
 import { businessService, listingService, leadService, dashboardService, requestService } from '@/lib/api';
 import { Business, Listing, Lead } from '@/types';
+import { isFeatureEnabled } from '@/lib/feature-flags';
+
 
 const BusinessDashboard = () => {
   const { user } = useAuth();
@@ -100,11 +102,24 @@ const BusinessDashboard = () => {
             </Link>
           )}
 
-          <Card><CardHeader><CardTitle>{t('leads_breakdown')}</CardTitle></CardHeader><CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="value" fill="hsl(222 47% 11%)" radius={[4,4,0,0]} /></BarChart>
-            </ResponsiveContainer>
-          </CardContent></Card>
+          {isFeatureEnabled('enableAdvancedAnalytics') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('leads_breakdown')}</CardTitle>
+              </CardHeader>
+              <CardContent className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(222 47% 11%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
           <div>
             <h2 className="text-lg font-semibold text-foreground mb-3">{t('recent_leads')}</h2>
             <div className="space-y-2">
