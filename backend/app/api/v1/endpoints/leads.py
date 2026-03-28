@@ -1,7 +1,8 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import crud, schemas
+from app.services.lead_service import LeadService
+from app import schemas
 from app.api import deps
 
 router = APIRouter()
@@ -13,9 +14,9 @@ def create_lead(
     lead_in: schemas.lead.LeadCreate,
 ) -> Any:
     """
-    Create new lead.
+    Create new lead using LeadService (handles deduplication and quotas).
     """
-    return crud.lead.create(db, obj_in=lead_in)
+    return LeadService.create_lead(db, lead_in=lead_in)
 
 @router.get("/", response_model=List[schemas.lead.Lead])
 def read_leads(
@@ -28,6 +29,21 @@ def read_leads(
     """
     return crud.lead.get_multi(db, skip=skip, limit=limit)
 
+@router.put("/{id}/status", response_model=schemas.lead.Lead)
+def update_lead_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    status: str,
+) -> Any:
+    """
+    Update lead status (new -> contacted -> closed).
+    """
+    lead = LeadService.update_status(db, lead_id=id, status=status)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
+
 @router.get("/business/{business_id}", response_model=List[schemas.lead.Lead])
 def read_business_leads(
     *,
@@ -37,4 +53,5 @@ def read_business_leads(
     """
     Get leads by business ID.
     """
+    from app import crud
     return crud.lead.get_by_business(db, business_id=business_id)

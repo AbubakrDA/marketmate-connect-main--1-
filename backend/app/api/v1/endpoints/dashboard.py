@@ -22,7 +22,9 @@ def get_admin_stats(
     request_count = db.query(models.transaction_communication.BuyerRequest).count()
     offer_count = db.query(models.transaction_communication.Offer).count()
     
-    total_revenue = db.query(func.sum(models.user_utils.PaymentTransaction.amount)).scalar() or 0
+    total_revenue_old = db.query(func.sum(models.user_utils.PaymentTransaction.amount)).scalar() or 0
+    total_revenue_new = db.query(func.sum(models.payment.Payment.amount)).filter(models.payment.Payment.status == "success").scalar() or 0
+    total_revenue = total_revenue_old + total_revenue_new
     pro_subs = db.query(models.marketing_subscription.Subscription).filter(
         models.marketing_subscription.Subscription.plan_name == "pro",
         models.marketing_subscription.Subscription.status == "active"
@@ -97,5 +99,16 @@ def get_business_stats(
         },
         "rating": business.rating,
         "review_count": business.review_count,
-        # Add more specific metrics as needed
+        "leads": {
+            "total": lead_count,
+            "new": db.query(models.listing_lead.Lead).filter(models.listing_lead.Lead.business_id == business_id, models.listing_lead.Lead.status == "new").count(),
+            "contacted": db.query(models.listing_lead.Lead).filter(models.listing_lead.Lead.business_id == business_id, models.listing_lead.Lead.status == "contacted").count(),
+            "closed": db.query(models.listing_lead.Lead).filter(models.listing_lead.Lead.business_id == business_id, models.listing_lead.Lead.status == "closed").count(),
+        },
+        "subscription": {
+            "plan": business.subscription.plan_name if business.subscription else "none",
+            "leads_used": business.subscription.leads_used if business.subscription else 0,
+            "leads_remaining": business.subscription.leads_remaining if business.subscription else 0,
+            "status": business.subscription.status if business.subscription else "none",
+        } if business.subscription else None
     }

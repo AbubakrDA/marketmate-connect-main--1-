@@ -7,6 +7,8 @@ class LeadBase(CamelBaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     message: Optional[str] = None
+    lead_type: Optional[str] = "whatsapp"
+    price: Optional[float] = 0.0
     status: Optional[str] = "new"
 
 class LeadCreate(LeadBase):
@@ -17,6 +19,8 @@ class LeadCreate(LeadBase):
     email: str
     phone: str
     message: str
+    lead_type: str = "whatsapp"
+    price: float = 0.0
 
 class LeadUpdate(LeadBase):
     pass

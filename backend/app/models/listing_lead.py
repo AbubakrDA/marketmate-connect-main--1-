@@ -33,7 +33,9 @@ class Lead(Base):
     email = Column(String)
     phone = Column(String)
     message = Column(Text)
-    status = Column(String, default="new")
+    lead_type = Column(String, default="whatsapp")  # whatsapp, call, message
+    price = Column(Float, default=0.0)
+    status = Column(String, default="new")  # new, contacted, closed
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     listing = relationship("Listing", back_populates="leads")

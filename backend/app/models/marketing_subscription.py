@@ -26,9 +26,11 @@ class Subscription(Base):
     business_id = Column(String, ForeignKey("business.id"), unique=True)
     plan_name = Column(String)  # free, pro
     monthly_price_egp = Column(Float)
+    leads_used = Column(Integer, default=0)
+    leads_remaining = Column(Integer, default=0)
     status = Column(String, default="active")
-    start_date = Column(String)
-    end_date = Column(String)
+    start_date = Column(DateTime(timezone=True), server_default=func.now())
+    end_date = Column(DateTime(timezone=True))
 
     business = relationship("Business", back_populates="subscription")
 
