@@ -1,7 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
+from .base import CamelBaseModel
 
-class UserBase(BaseModel):
+class UserBase(CamelBaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = "user"
@@ -20,8 +21,7 @@ class UserInDBBase(UserBase):
     rating: float = 0.0
     review_count: int = 0
     
-    class Config:
-        from_attributes = True
+    pass
 
 class User(UserInDBBase):
     pass

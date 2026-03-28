@@ -4,7 +4,7 @@ import { authService, userService } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   register: (data: { name: string; email: string; password: string; phone: string; role: UserRole }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const profile = await userService.getMe();
       setUser(profile);
       localStorage.setItem('marketmate_user', JSON.stringify(profile));
-      return { success: true };
+      return { success: true, user: profile };
     } catch (error: any) {
       return { success: false, error: error.response?.data?.detail || 'Login failed' };
     }

@@ -1,8 +1,8 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from .base import CamelBaseModel
 from datetime import datetime
 
-class MessageBase(BaseModel):
+class MessageBase(CamelBaseModel):
     text: Optional[str] = None
 
 class MessageCreate(MessageBase):
@@ -17,13 +17,12 @@ class MessageInDBBase(MessageBase):
     sender_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Message(MessageInDBBase):
     pass
 
-class ConversationBase(BaseModel):
+class ConversationBase(CamelBaseModel):
     request_id: Optional[str] = None
     offer_id: Optional[str] = None
 
@@ -35,8 +34,7 @@ class ConversationInDBBase(ConversationBase):
     id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Conversation(ConversationInDBBase):
     participants: List[str]

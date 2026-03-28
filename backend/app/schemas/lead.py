@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel
+from .base import CamelBaseModel
 from datetime import datetime
 
-class LeadBase(BaseModel):
+class LeadBase(CamelBaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -28,8 +28,7 @@ class LeadInDBBase(LeadBase):
     user_id: Optional[str] = None
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Lead(LeadInDBBase):
     pass

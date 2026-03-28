@@ -1,9 +1,9 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from .base import CamelBaseModel
 from datetime import datetime
 from .business import Business
 
-class ListingBase(BaseModel):
+class ListingBase(CamelBaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
@@ -34,8 +34,7 @@ class ListingInDBBase(ListingBase):
     business_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Listing(ListingInDBBase):
     business: Optional[Business] = None

@@ -1,8 +1,8 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from .base import CamelBaseModel
 from datetime import datetime
 
-class BuyerRequestBase(BaseModel):
+class BuyerRequestBase(CamelBaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
@@ -30,13 +30,10 @@ class BuyerRequestInDBBase(BuyerRequestBase):
     user_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
-
 class BuyerRequest(BuyerRequestInDBBase):
     pass
 
-class OfferBase(BaseModel):
+class OfferBase(CamelBaseModel):
     offer_title: Optional[str] = None
     offer_message: Optional[str] = None
     offer_price: Optional[float] = None
@@ -60,8 +57,7 @@ class OfferInDBBase(OfferBase):
     business_id: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Offer(OfferInDBBase):
     pass

@@ -1,7 +1,7 @@
 from typing import Optional
-from pydantic import BaseModel
+from .base import CamelBaseModel
 
-class BusinessBase(BaseModel):
+class BusinessBase(CamelBaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
     sub_category: Optional[str] = None
@@ -31,8 +31,7 @@ class BusinessInDBBase(BusinessBase):
     rating: float = 0.0
     review_count: int = 0
     
-    class Config:
-        from_attributes = True
+    pass
 
 class Business(BusinessInDBBase):
     pass
