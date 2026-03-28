@@ -9,27 +9,37 @@ import { Link } from 'react-router-dom';
 import { WalletBadge } from '@/components/WalletBadge';
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { listingService, leadService } from '@/lib/api';
+import { listingService, leadService, requestService, offerService } from '@/lib/api';
 import { Listing, Lead } from '@/types';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   
-  const [recommended, setRecommended] = useState<Listing[]>([]);
   const [myLeads, setMyLeads] = useState<Lead[]>([]);
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [recommended, setRecommended] = useState<Listing[]>([]);
+  const [totalOffers, setTotalOffers] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!user?.id) return;
       try {
-        const [listings, leads] = await Promise.all([
+        const [listings, leads, requests] = await Promise.all([
           listingService.getAll(),
-          // In a real app we'd have leadService.getByUser
-          leadService.getAll() 
+          leadService.getAll(),
+          requestService.getByUser(user.id)
         ]);
+        
         setRecommended(listings.slice(0, 3));
-        setMyLeads(leads.filter((l: any) => l.buyer_user_id === user?.id));
+        setMyLeads(leads.filter((l: any) => l.buyer_user_id === user?.id || l.user_id === user?.id));
+        setMyRequests(requests);
+        
+        // Fetch offers for each request to get total count
+        const allOffers = await Promise.all(requests.map((r: any) => offerService.getByRequest(r.id)));
+        const offerCount = allOffers.reduce((sum, offers) => sum + offers.length, 0);
+        setTotalOffers(offerCount);
       } catch (error) {
         console.error('Error fetching user dashboard:', error);
       } finally {
@@ -40,8 +50,6 @@ const UserDashboard = () => {
   }, [user?.id]);
 
   const recs = getRecommendationsByUser(user?.id || '');
-  const requests = getBuyerRequestsByUser(user?.id || '');
-  const totalOffers = requests.reduce((sum, r) => sum + getOffersByRequest(r.id).length, 0);
 
   if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
 
@@ -52,7 +60,7 @@ const UserDashboard = () => {
         <WalletBadge />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{requests.length}</p><p className="text-sm text-muted-foreground">{t('my_requests')}</p></CardContent></Card>
+        <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{myRequests.length}</p><p className="text-sm text-muted-foreground">{t('my_requests')}</p></CardContent></Card>
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{totalOffers}</p><p className="text-sm text-muted-foreground">{t('offers_received')}</p></CardContent></Card>
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{myLeads.length}</p><p className="text-sm text-muted-foreground">{t('my_inquiries')}</p></CardContent></Card>
         <Card><CardContent className="p-5 text-center"><p className="text-3xl font-bold text-foreground">{recs.length}</p><p className="text-sm text-muted-foreground">{t('recommendations')}</p></CardContent></Card>

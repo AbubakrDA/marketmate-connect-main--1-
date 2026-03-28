@@ -11,7 +11,7 @@ import {
 import {
   LayoutDashboard, User, List, PlusCircle, Inbox, Lightbulb, BarChart3, Package,
   Megaphone, CreditCard, Bell, Heart, Users, Building2, FileText, TrendingUp,
-  MessageSquare, Send, Search, ShoppingBag, Tag, Brain, Star, Radar, BookOpen, Mail, Zap, DollarSign, Factory,
+  MessageSquare, Send, Search, ShoppingBag, Tag, Brain, Star, Radar, BookOpen, Mail, Zap, DollarSign, Factory, Lock
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -22,6 +22,7 @@ export const DashboardSidebar = () => {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const [unread, setUnread] = useState(0);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     const update = () => setUnread(getUnreadCount(user?.id || ''));
@@ -29,6 +30,24 @@ export const DashboardSidebar = () => {
     const interval = setInterval(update, 3000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (user?.role === 'business') {
+        try {
+          const { businessService, dashboardService } = await import('@/lib/api');
+          const biz = await businessService.getByOwner(user.id);
+          const bizStats = await dashboardService.getBusinessStats(biz.id);
+          setStats(bizStats);
+        } catch (e) {
+          console.error("Sidebar stats fetch failed", e);
+        }
+      }
+    };
+    fetchStatus();
+  }, [user]);
+
+  const plan = stats?.subscription?.plan?.toLowerCase() || 'basic';
 
   const chatUrl = user?.role === 'business' ? '/business/chat' : '/user/chat';
 
@@ -55,16 +74,16 @@ export const DashboardSidebar = () => {
     { title: t('create_listing'), url: '/business/listings/create', icon: PlusCircle },
     { title: t('leads'), url: '/business/leads', icon: Inbox },
     { title: t('sale_campaigns'), url: '/business/sales', icon: Tag },
-    { title: t('demand_radar'), url: '/business/demand-radar', icon: Radar },
+    { title: t('demand_radar'), url: '/business/demand-radar', icon: Radar, premium: true },
     { title: t('group_deals'), url: '/business/group-deals', icon: Users },
-    { title: t('opportunity_map'), url: '/business/opportunity-map', icon: BookOpen },
-    { title: t('ai_analytics'), url: '/business/ai-analytics', icon: Brain },
+    { title: t('opportunity_map'), url: '/business/opportunity-map', icon: BookOpen, premium: true },
+    { title: t('ai_analytics'), url: '/business/ai-analytics', icon: Brain, premium: true },
     { title: t('favorite_customers'), url: '/business/favorite-customers', icon: Star },
     { title: t('recommendations'), url: '/business/recommendations', icon: Lightbulb },
     { title: t('reports'), url: '/business/reports', icon: BarChart3 },
     { title: t('ads'), url: '/business/ads', icon: Megaphone },
     { title: t('subscription'), url: '/business/subscription', icon: CreditCard },
-    { title: t('automations'), url: '/business/automations', icon: Zap },
+    { title: t('automations'), url: '/business/automations', icon: Zap, premium: true },
     { title: t('b2b_marketplace'), url: '/business/b2b', icon: Factory },
     { title: t('b2b_my_requests'), url: '/business/b2b/my-requests', icon: ShoppingBag },
     { title: t('b2b_my_offers'), url: '/business/b2b/my-offers', icon: Send },
@@ -101,7 +120,10 @@ export const DashboardSidebar = () => {
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && (
                         <span className="flex flex-1 items-center justify-between">
-                          <span>{item.title}</span>
+                          <span className="flex items-center gap-2">
+                            {item.title}
+                            {item.premium && plan === 'basic' && <Lock className="h-3 w-3 text-muted-foreground opacity-50" />}
+                          </span>
                           {'badge' in item && (item as any).badge > 0 && (
                             <Badge className="bg-coral text-coral-foreground text-[10px] px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center">
                               {(item as any).badge}

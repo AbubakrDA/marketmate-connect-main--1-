@@ -117,4 +117,42 @@ export const dashboardService = {
   },
 };
 
+export const requestService = {
+  getAll: async (category?: string) => {
+    const response = await api.get('/requests/', { params: { category } });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get(`/requests/${id}`);
+    return response.data;
+  },
+  getByUser: async (userId: string) => {
+    const response = await api.get(`/requests/user/${userId}`);
+    return response.data;
+  },
+  create: async (requestData: any) => {
+    const response = await api.post('/requests/', requestData);
+    return response.data;
+  },
+};
+
+export const offerService = {
+  getAll: async () => {
+    const response = await api.get('/offers/');
+    return response.data;
+  },
+  getByBusiness: async (businessId: string) => {
+    const response = await api.get(`/offers/business/${businessId}`);
+    return response.data;
+  },
+  getByRequest: async (requestId: string) => {
+    const response = await api.get(`/offers/request/${requestId}`);
+    return response.data;
+  },
+  create: async (offerData: any) => {
+    const response = await api.post('/offers/', offerData);
+    return response.data;
+  },
+};
+
 export default api;

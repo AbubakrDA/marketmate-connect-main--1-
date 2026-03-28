@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { businessService, listingService, leadService, dashboardService } from '@/lib/api';
+import { businessService, listingService, leadService, dashboardService, requestService } from '@/lib/api';
 import { Business, Listing, Lead } from '@/types';
 
 const BusinessDashboard = () => {
@@ -20,6 +20,7 @@ const BusinessDashboard = () => {
   const [bListings, setBListings] = useState<Listing[]>([]);
   const [bLeads, setBLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [matchingRequests, setMatchingRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,14 +30,17 @@ const BusinessDashboard = () => {
         const business = await businessService.getByOwner(user.id);
         setBiz(business);
         
-        const [listings, leads, bizStats] = await Promise.all([
+        const [listings, leads, bizStats, allRequests] = await Promise.all([
           listingService.getByBusiness(business.id),
           leadService.getByBusiness(business.id),
-          dashboardService.getBusinessStats(business.id)
+          dashboardService.getBusinessStats(business.id),
+          requestService.getAll()
         ]);
+        
         setBListings(listings);
         setBLeads(leads);
         setStats(bizStats);
+        setMatchingRequests(allRequests.filter((r: any) => r.category === business.category && r.status === 'open'));
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -49,7 +53,6 @@ const BusinessDashboard = () => {
   // Keep some mock defaults for features not yet fully implemented in backend endpoints
   const bAds = biz ? getAdsByBusiness(biz.id) : [];
   const bOffers = stats ? { length: stats.counts.offers } : { length: 0 };
-  const matchingRequests = biz ? getOpenBuyerRequests().filter(r => r.category === biz.category) : [];
   const won = bLeads.filter(l => l.status === 'won').length;
   const convRate = bLeads.length > 0 ? Math.round((won / bLeads.length) * 100) : 0;
 
